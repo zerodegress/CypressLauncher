@@ -164,6 +164,7 @@ public class LaunchWindow : Form
     private Label DeviceIPLabel;
     private TextBox DeviceIPTextBox;
     private Button StartServerButton;
+    private Button DryRunServerButton;
     private Label LevelLabel;
     private TextBox LevelTextBox;
     private Label PlayerCountLabel;
@@ -901,6 +902,7 @@ public class LaunchWindow : Form
         AllowAIBackfillCheckBox = new CheckBox();
         FOVLabel = new Label();
         FOVTextBox = new TextBox();
+        DryRunServerButton = new Button();
         SuspendLayout();
         // 
         // ServerIPTextBox
@@ -1158,11 +1160,21 @@ public class LaunchWindow : Form
         // 
         StartServerButton.Location = new Point(456, 313);
         StartServerButton.Name = "StartServerButton";
-        StartServerButton.Size = new Size(215, 23);
+        StartServerButton.Size = new Size(154, 23);
         StartServerButton.TabIndex = 15;
         StartServerButton.Text = "Start Server!";
         StartServerButton.UseVisualStyleBackColor = true;
         StartServerButton.Click += StartServerButton_Click;
+        // 
+        // DryRunServerButton
+        // 
+        DryRunServerButton.Location = new Point(617, 313);
+        DryRunServerButton.Name = "DryRunServerButton";
+        DryRunServerButton.Size = new Size(111, 23);
+        DryRunServerButton.TabIndex = 38;
+        DryRunServerButton.Text = "Dry Run";
+        DryRunServerButton.UseVisualStyleBackColor = true;
+        DryRunServerButton.Click += DryRunServerButton_Click;
         // 
         // LevelLabel
         // 
@@ -1345,6 +1357,7 @@ public class LaunchWindow : Form
         Controls.Add(InclusionTextBox);
         Controls.Add(DeviceIPLabel);
         Controls.Add(DeviceIPTextBox);
+        Controls.Add(DryRunServerButton);
         Controls.Add(StartServerButton);
         Controls.Add(LevelLabel);
         Controls.Add(LevelTextBox);
@@ -1377,6 +1390,117 @@ public class LaunchWindow : Form
         Load += LaunchWindow_Load;
         ResumeLayout(false);
         PerformLayout();
+    }
+
+    private void DryRunServerButton_Click(object sender, EventArgs e)
+    {
+        if (!DedicatedVerifyLaunch())
+        {
+            return;
+        }
+
+        string path = s_gameToExecutableName[m_selectedGame];
+        bool failed = false;
+        string dryRunNote = string.Empty;
+        if (GameRequiresPatchedExe(Path.Combine(GetGameDir(), path), ref failed) && !failed)
+        {
+            path = s_gameToPatchedExecutableName[m_selectedGame];
+            string patchedExePath = Path.Combine(GetGameDir(), s_gameToPatchedExecutableName[m_selectedGame]);
+            if (!File.Exists(patchedExePath))
+            {
+                dryRunNote = $"Patched executable is missing: {patchedExePath}\r\nA real run will create it first.";
+            }
+        }
+        if (failed)
+        {
+            return;
+        }
+
+        string gameDir = GetGameDir();
+        bool flag = UseModsCheckbox.Checked && !string.IsNullOrEmpty(ModPackCombobox.Text);
+        bool playlistflag = PlaylistCheckBox.Checked && !string.IsNullOrWhiteSpace(PlaylistComboBox.Text);
+        bool aibackfillflag = AllowAIBackfillCheckBox.Checked;
+        string text;
+        if (m_selectedGame < PVZGame.BFN)
+        {
+            text = "-server -level " + LevelTextBox.Text + " -listen " + DeviceIPTextBox.Text + " -inclusion " + InclusionTextBox.Text + " -allowMultipleInstances " + "-Network.ServerAddress " + DeviceIPTextBox.Text;
+            if (!string.IsNullOrWhiteSpace(DedicatedServerPasswordTextBox.Text))
+            {
+                text = text + " -Server.ServerPassword " + DedicatedServerPasswordTextBox.Text;
+            }
+            if (playlistflag)
+            {
+                text = text + " -usePlaylist -playlistFilename \"" + Path.Combine(GetGameDir(), "Playlists", PlaylistComboBox.Text) + "\"";
+            }
+            if (s_serverLaunchArgsForGame.ContainsKey(m_selectedGame))
+            {
+                text = text + " " + s_serverLaunchArgsForGame[m_selectedGame];
+            }
+            if (!string.IsNullOrWhiteSpace(AdditionalServerLaunchArgumentsTextBox.Text))
+            {
+                text = text + " " + AdditionalServerLaunchArgumentsTextBox.Text;
+            }
+            if (!string.IsNullOrWhiteSpace(PlayerCountTextBox.Text))
+            {
+                text = text + " -Network.MaxClientCount " + PlayerCountTextBox.Text;
+            }
+        }
+        else
+        {
+            text = "-server" + " -listen " + DeviceIPTextBox.Text + " -dsub " + LevelTextBox.Text + " -inclusion " + InclusionTextBox.Text + " -startpoint " + StartPointTextBox.Text + " -allowMultipleInstances -enableServerLog " + "-Network.ServerAddress " + DeviceIPTextBox.Text;
+            if (!string.IsNullOrWhiteSpace(DedicatedServerPasswordTextBox.Text))
+            {
+                text = text + " -Server.ServerPassword " + DedicatedServerPasswordTextBox.Text;
+            }
+            if (playlistflag)
+            {
+                text = text + " -usePlaylist -playlistFilename \"" + Path.Combine(GetGameDir(), "Playlists", PlaylistComboBox.Text) + "\"";
+            }
+            if (flag)
+            {
+                text = text + " -datapath \"" + Path.Combine(GetGameDir(), "ModData", ModPackCombobox.Text) + "\"";
+            }
+            if (!aibackfillflag)
+            {
+                text = text + " -GameMode.BackfillMpWithAI false";
+            }
+            if (s_serverLaunchArgsForGame.ContainsKey(m_selectedGame))
+            {
+                text = text + " " + s_serverLaunchArgsForGame[m_selectedGame];
+            }
+            if (!string.IsNullOrWhiteSpace(AdditionalServerLaunchArgumentsTextBox.Text))
+            {
+                text = text + " " + AdditionalServerLaunchArgumentsTextBox.Text;
+            }
+            if (!string.IsNullOrWhiteSpace(PlayerCountTextBox.Text))
+            {
+                text = text + " -Network.MaxClientCount " + PlayerCountTextBox.Text + " -NetObjectSystem.MaxServerConnectionCount " + PlayerCountTextBox.Text + " -Online.DirtySockMaxConnectionCount " + PlayerCountTextBox.Text;
+            }
+        }
+
+        string preview = "Dry Run - Server Launch Preview"
+            + Environment.NewLine + Environment.NewLine
+            + "WorkingDirectory: " + gameDir + Environment.NewLine
+            + "Executable: " + Path.Combine(gameDir, path) + Environment.NewLine
+            + "Arguments: " + text + Environment.NewLine + Environment.NewLine
+            + "Environment:" + Environment.NewLine
+            + "EARtPLaunchCode=" + GetRtPLaunchCode() + Environment.NewLine
+            + "ContentId=1026482" + Environment.NewLine
+            + "GW_LAUNCH_ARGS=" + text + Environment.NewLine;
+        if (flag)
+        {
+            preview += "GAME_DATA_DIR=" + Path.Combine(gameDir, "ModData", ModPackCombobox.Text) + Environment.NewLine;
+        }
+        else
+        {
+            preview += "GAME_DATA_DIR=<unset>" + Environment.NewLine;
+        }
+        if (!string.IsNullOrEmpty(dryRunNote))
+        {
+            preview += Environment.NewLine + dryRunNote;
+        }
+
+        MessageBox.Show(preview, "Server Dry Run", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     private void StartServerButton_Click(object sender, EventArgs e)
