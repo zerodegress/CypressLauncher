@@ -1385,7 +1385,7 @@ public class LaunchWindow : Form
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         Name = "LaunchWindow";
-        Icon = Icon.FromHandle(CypressLauncher.Properties.Resources.CypressIcon.GetHicon());
+        Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         Text = "Cypress Launcher";
         Load += LaunchWindow_Load;
         ResumeLayout(false);
