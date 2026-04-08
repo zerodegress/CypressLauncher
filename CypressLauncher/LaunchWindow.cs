@@ -764,7 +764,7 @@ public class LaunchWindow : Form
             StartPointLabel.Visible = false;
             StartPointTextBox.Visible = false;
             StartPointTextBox.Enabled = false;
-            LevelLabel.Text = "Level";
+            LevelLabel.Text = "地图";
             UsernameTextbox.MaxLength = 32;
             AllowAIBackfillCheckBox.Enabled = false;
             AllowAIBackfillCheckBox.Visible = false;
