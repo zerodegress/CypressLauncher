@@ -565,6 +565,7 @@ public class LaunchWindow : Form
                 {
                     FileName = "courgette.exe",
                     Arguments = $"{courgetteApplyCommand} \"{Path.Combine(GetGameDir(), s_gameToExecutableName[m_selectedGame])}\" {m_selectedGame}.patch \"{Path.Combine(GetGameDir(), s_gameToPatchedExecutableName[m_selectedGame])}\"",
+                    WorkingDirectory = AppContext.BaseDirectory,
                     Verb = "runas",
                     UseShellExecute = true
                 };
@@ -613,7 +614,7 @@ public class LaunchWindow : Form
         //Datapath workaround since GAME_DATA_DIR doesn't work for BFN
         if (flag && (m_selectedGame == PVZGame.BFN))
         {
-            text = text + " -datapath \"" + Path.Combine(GetGameDir(), "ModData", ModPackCombobox.Text + "\"");
+            text = text + " -datapath \"" + Path.Combine(GetGameDir(), "ModData", ModPackCombobox.Text) + "\"";
         }
         if (!string.IsNullOrWhiteSpace(FOVTextBox.Text))
         {
@@ -650,6 +651,7 @@ public class LaunchWindow : Form
         {
             FileName = Path.Combine(gameDir, path),
             Arguments = text,
+            WorkingDirectory = gameDir,
             UseShellExecute = false
         };
         Process process2 = new Process
@@ -1405,6 +1407,7 @@ public class LaunchWindow : Form
                 {
                     FileName = "courgette.exe",
                     Arguments = $"{courgetteApplyCommand} \"{Path.Combine(GetGameDir(), s_gameToExecutableName[m_selectedGame])}\" {m_selectedGame}.patch \"{Path.Combine(GetGameDir(), s_gameToPatchedExecutableName[m_selectedGame])}\"",
+                    WorkingDirectory = AppContext.BaseDirectory,
                     Verb = "runas",
                     UseShellExecute = true
                 };
@@ -1441,7 +1444,7 @@ public class LaunchWindow : Form
         Environment.SetEnvironmentVariable("ContentId", "1026482");
         bool flag = UseModsCheckbox.Checked && !string.IsNullOrEmpty(ModPackCombobox.Text);
         Environment.SetEnvironmentVariable("GAME_DATA_DIR", flag ? Path.Combine(gameDir, "ModData", ModPackCombobox.Text) : null);
-        bool playlistflag = PlaylistCheckBox.Checked && !string.IsNullOrEmpty(PlaylistCheckBox.Text);
+        bool playlistflag = PlaylistCheckBox.Checked && !string.IsNullOrWhiteSpace(PlaylistComboBox.Text);
         bool aibackfillflag = AllowAIBackfillCheckBox.Checked;
         string text;
         if (m_selectedGame < PVZGame.BFN)
@@ -1454,7 +1457,7 @@ public class LaunchWindow : Form
             }
             if (playlistflag)
             {
-                text = text + " -usePlaylist -playlistFilename \"" + Path.Combine(GetGameDir(), "Playlists", PlaylistComboBox.Text + "\"");
+                text = text + " -usePlaylist -playlistFilename \"" + Path.Combine(GetGameDir(), "Playlists", PlaylistComboBox.Text) + "\"";
             }
             if (s_serverLaunchArgsForGame.ContainsKey(m_selectedGame))
             {
@@ -1487,6 +1490,7 @@ public class LaunchWindow : Form
             {
                 FileName = Path.Combine(gameDir, path),
                 Arguments = text,
+                WorkingDirectory = gameDir,
                 UseShellExecute = false
             };
             Process process2 = new Process
@@ -1526,11 +1530,11 @@ public class LaunchWindow : Form
             }
             if (playlistflag)
             {
-                text = text + " -usePlaylist -playlistFilename \"" + Path.Combine(GetGameDir(), "Playlists", PlaylistComboBox.Text + "\"");
+                text = text + " -usePlaylist -playlistFilename \"" + Path.Combine(GetGameDir(), "Playlists", PlaylistComboBox.Text) + "\"";
             }
             if (flag)
             {
-                text = text + " -datapath \"" + Path.Combine(GetGameDir(), "ModData", ModPackCombobox.Text + "\"");
+                text = text + " -datapath \"" + Path.Combine(GetGameDir(), "ModData", ModPackCombobox.Text) + "\"";
             }
             if (!aibackfillflag)
             {
@@ -1567,6 +1571,7 @@ public class LaunchWindow : Form
             {
                 FileName = Path.Combine(gameDir, path),
                 Arguments = text,
+                WorkingDirectory = gameDir,
                 UseShellExecute = false
             };
             Process process2 = new Process
