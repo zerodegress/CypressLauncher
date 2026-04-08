@@ -552,7 +552,7 @@ public class LaunchWindow : Form
 
 
             {
-                GameStatusLabel.Text = "First time launch - Creating patched executable (this might take a while)";
+                GameStatusLabel.Text = "初次启动 - 创建修补的可执行文件（这可能会花一些时间）";
 
                 string courgetteApplyCommand = "-apply";
                 if (m_selectedGame == PVZGame.BFN)
@@ -579,15 +579,15 @@ public class LaunchWindow : Form
                     process.WaitForExit();
                     if (process.ExitCode != 0)
                     {
-                        GameStatusLabel.Text = "Patcher failed (Code: " + process.ExitCode.ToString("X") + ")";
+                        GameStatusLabel.Text = "修补失败 (代码：" + process.ExitCode.ToString("X") + ")";
                         return;
                     }
-                    GameStatusLabel.Text = "Success - Created patched executable " + s_gameToPatchedExecutableName[m_selectedGame];
+                    GameStatusLabel.Text = "成功 - 创建了修补的可执行文件 " + s_gameToPatchedExecutableName[m_selectedGame];
                 }
                 catch (Exception ex)
                 {
-                    GameStatusLabel.Text = "Failed to start courgette";
-                    MessageBox.Show("Exception while starting courgette: " + ex.Message);
+                    GameStatusLabel.Text = "启动 courgette 失败";
+                    MessageBox.Show("在启动 courgette 时发生错误：" + ex.Message);
                     return;
                 }
             }
@@ -620,11 +620,11 @@ public class LaunchWindow : Form
             double FOVValue = 0.0;
             double DefaultFOV = 70;
             double FOVMutliplier = 0.0;
-            
+
             string FOVValueText = FOVTextBox.Text;
             FOVValue = double.Parse(FOVTextBox.Text);
             FOVMutliplier = FOVValue / DefaultFOV;
-            
+
             text = text + " -Render.FovMultiplier " + FOVMutliplier.ToString();
         }
         if (!string.IsNullOrWhiteSpace(AdditionalLaunchArgumentsBox.Text))
@@ -641,7 +641,7 @@ public class LaunchWindow : Form
             }
             catch (Exception ex2)
             {
-                MessageBox.Show("Exception when attempting to copy " + GetServerDLLName() + ": " + ex2.Message);
+                MessageBox.Show("尝试复制 " + GetServerDLLName() + " 时发生错误：" + ex2.Message);
                 return;
             }
 
@@ -661,23 +661,23 @@ public class LaunchWindow : Form
         try
         {
             process2.Start();
-            GameStatusLabel.Text = $"Game launched (PID {process2.Id})";
+            GameStatusLabel.Text = $"游戏已启动 (进程号 {process2.Id})";
             GameStatusLabel.ForeColor = Color.LightGreen;
         }
         catch (Win32Exception ex3)
         {
             if (ex3.NativeErrorCode == 2)
             {
-                GameStatusLabel.Text = "Game executable not found.";
+                GameStatusLabel.Text = "游戏可执行文件未找到。";
             }
             else
             {
-                MessageBox.Show("Exception: " + ex3.Message);
+                MessageBox.Show("错误：" + ex3.Message);
             }
         }
         catch (Exception ex4)
         {
-            MessageBox.Show("Exception: " + ex4.Message);
+            MessageBox.Show("错误：" + ex4.Message);
         }
     }
 
@@ -685,7 +685,7 @@ public class LaunchWindow : Form
     {
         Invoke((System.Windows.Forms.MethodInvoker)delegate
         {
-            GameStatusLabel.Text = "Game exited with code " + (sender as Process)?.ExitCode.ToString("X");
+            GameStatusLabel.Text = "游戏退出，代码：" + (sender as Process)?.ExitCode.ToString("X");
             GameStatusLabel.ForeColor = Color.White;
             try
             {
@@ -718,7 +718,7 @@ public class LaunchWindow : Form
         while (!flag)
         {
             using FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
-            folderBrowserDialog.Description = "Select " + s_gameToGameName[m_selectedGame] + "'s directory";
+            folderBrowserDialog.Description = "选择 " + s_gameToGameName[m_selectedGame] + "的文件夹";
             folderBrowserDialog.ShowNewFolderButton = false;
             if (folderBrowserDialog.ShowDialog() == DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
             {
@@ -729,7 +729,7 @@ public class LaunchWindow : Form
                 }
                 else
                 {
-                    MessageBox.Show("Selected folder does not contain " + s_gameToExecutableName[m_selectedGame] + ". Please select the folder that contains " + s_gameToExecutableName[m_selectedGame]);
+                    MessageBox.Show("选择文件夹未包含 " + s_gameToExecutableName[m_selectedGame] + "。请选择文件夹，包含如下文件：" + s_gameToExecutableName[m_selectedGame]);
                 }
                 continue;
             }
@@ -784,7 +784,7 @@ public class LaunchWindow : Form
             FOVLabel.Enabled = false;
             FOVTextBox.Visible = false;
             FOVTextBox.Enabled = false;
-        }    
+        }
         LoadUserData(m_selectedGame.ToString());
     }
 
@@ -809,11 +809,11 @@ public class LaunchWindow : Form
             if (registryKey2 != null && registryKey2.GetValue("Install Dir") is string text && Directory.Exists(text) && File.Exists(Path.Combine(text, s_gameToExecutableName[m_selectedGame])))
             {
                 GameDirectoryLabel.Text = text;
-                GameStatusLabel.Text = $"Found directory for {m_selectedGame}: {text}";
+                GameStatusLabel.Text = $"找到目录 {m_selectedGame}：{text}";
                 return;
             }
         }
-        GameStatusLabel.Text = "Could not automatically find directory";
+        GameStatusLabel.Text = "未能自动找到目录";
     }
 
     private void ModPackCombobox_OnDropDown(object sender, EventArgs e)
@@ -902,37 +902,37 @@ public class LaunchWindow : Form
         FOVLabel = new Label();
         FOVTextBox = new TextBox();
         SuspendLayout();
-        // 
+        //
         // ServerIPTextBox
-        // 
+        //
         ServerIPTextBox.Anchor = AnchorStyles.Bottom;
         ServerIPTextBox.Location = new Point(150, 183);
         ServerIPTextBox.Name = "ServerIPTextBox";
         ServerIPTextBox.Size = new Size(215, 23);
         ServerIPTextBox.TabIndex = 7;
-        // 
+        //
         // label1
-        // 
+        //
         label1.AutoSize = true;
         label1.BackColor = SystemColors.Control;
         label1.Location = new Point(150, 165);
         label1.Name = "label1";
         label1.Size = new Size(52, 15);
         label1.TabIndex = 1;
-        label1.Text = "Server IP";
-        // 
+        label1.Text = "服务器 IP";
+        //
         // JoinButton
-        // 
+        //
         JoinButton.Location = new Point(150, 313);
         JoinButton.Name = "JoinButton";
         JoinButton.Size = new Size(215, 23);
         JoinButton.TabIndex = 10;
-        JoinButton.Text = "Join Server!";
+        JoinButton.Text = "加入服务器！";
         JoinButton.UseVisualStyleBackColor = true;
         JoinButton.Click += JoinButton_Click;
-        // 
+        //
         // GameStatusLabel
-        // 
+        //
         GameStatusLabel.BackColor = Color.Transparent;
         GameStatusLabel.Font = new Font("Segoe UI", 16F);
         GameStatusLabel.ForeColor = Color.White;
@@ -941,28 +941,28 @@ public class LaunchWindow : Form
         GameStatusLabel.Size = new Size(776, 102);
         GameStatusLabel.TabIndex = 3;
         GameStatusLabel.TextAlign = ContentAlignment.MiddleCenter;
-        // 
+        //
         // label2
-        // 
+        //
         label2.AutoSize = true;
         label2.BackColor = SystemColors.Control;
         label2.Location = new Point(150, 117);
         label2.Name = "label2";
         label2.Size = new Size(60, 15);
         label2.TabIndex = 5;
-        label2.Text = "Username";
-        // 
+        label2.Text = "用户名";
+        //
         // UsernameTextbox
-        // 
+        //
         UsernameTextbox.Anchor = AnchorStyles.Bottom;
         UsernameTextbox.Location = new Point(150, 135);
         UsernameTextbox.MaxLength = 32;
         UsernameTextbox.Name = "UsernameTextbox";
         UsernameTextbox.Size = new Size(215, 23);
         UsernameTextbox.TabIndex = 6;
-        // 
+        //
         // GameDirectoryLabel
-        // 
+        //
         GameDirectoryLabel.AutoSize = true;
         GameDirectoryLabel.BackColor = Color.Transparent;
         GameDirectoryLabel.ForeColor = Color.Black;
@@ -970,48 +970,48 @@ public class LaunchWindow : Form
         GameDirectoryLabel.Name = "GameDirectoryLabel";
         GameDirectoryLabel.Size = new Size(127, 15);
         GameDirectoryLabel.TabIndex = 6;
-        GameDirectoryLabel.Text = "No Game Directory Set";
-        // 
+        GameDirectoryLabel.Text = "尚未设置游戏目录";
+        //
         // SelectGameDirectoryButton
-        // 
+        //
         SelectGameDirectoryButton.Location = new Point(5, 20);
         SelectGameDirectoryButton.Name = "SelectGameDirectoryButton";
         SelectGameDirectoryButton.Size = new Size(127, 23);
         SelectGameDirectoryButton.TabIndex = 0;
-        SelectGameDirectoryButton.Text = "Select Game Directory";
+        SelectGameDirectoryButton.Text = "选择游戏目录";
         SelectGameDirectoryButton.UseVisualStyleBackColor = true;
         SelectGameDirectoryButton.Click += SelectGameDirectoryButton_Click;
-        // 
+        //
         // label3
-        // 
+        //
         label3.AutoSize = true;
         label3.BackColor = Color.Transparent;
         label3.Location = new Point(161, 60);
         label3.Name = "label3";
         label3.Size = new Size(521, 15);
         label3.TabIndex = 8;
-        label3.Text = "Note: To prevent unnecessary issues, please leave this window open until you've closed the game.";
-        // 
+        label3.Text = "注意：为了防止不必要的问题，请让这个窗口一直开启直到你关闭游戏。";
+        //
         // label4
-        // 
+        //
         label4.AutoSize = true;
         label4.BackColor = SystemColors.Control;
         label4.Location = new Point(150, 266);
         label4.Name = "label4";
         label4.Size = new Size(166, 15);
         label4.TabIndex = 10;
-        label4.Text = "Additional Launch Arguments";
-        // 
+        label4.Text = "额外启动参数";
+        //
         // AdditionalLaunchArgumentsBox
-        // 
+        //
         AdditionalLaunchArgumentsBox.Anchor = AnchorStyles.Bottom;
         AdditionalLaunchArgumentsBox.Location = new Point(150, 284);
         AdditionalLaunchArgumentsBox.Name = "AdditionalLaunchArgumentsBox";
         AdditionalLaunchArgumentsBox.Size = new Size(215, 23);
         AdditionalLaunchArgumentsBox.TabIndex = 9;
-        // 
+        //
         // GameSelectorComboBox
-        // 
+        //
         GameSelectorComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
         GameSelectorComboBox.FormattingEnabled = true;
         GameSelectorComboBox.Location = new Point(5, 117);
@@ -1019,29 +1019,29 @@ public class LaunchWindow : Form
         GameSelectorComboBox.Size = new Size(121, 23);
         GameSelectorComboBox.TabIndex = 2;
         GameSelectorComboBox.SelectedIndexChanged += GameSelectorComboBox_SelectedIndexChanged;
-        // 
+        //
         // label5
-        // 
+        //
         label5.AutoSize = true;
         label5.BackColor = SystemColors.Control;
         label5.Location = new Point(5, 99);
         label5.Name = "label5";
         label5.Size = new Size(72, 15);
         label5.TabIndex = 12;
-        label5.Text = "Select Game";
-        // 
+        label5.Text = "选择游戏";
+        //
         // AutoFindGameDirButton
-        // 
+        //
         AutoFindGameDirButton.Location = new Point(5, 49);
         AutoFindGameDirButton.Name = "AutoFindGameDirButton";
         AutoFindGameDirButton.Size = new Size(127, 23);
         AutoFindGameDirButton.TabIndex = 1;
-        AutoFindGameDirButton.Text = "Scan for Directory";
+        AutoFindGameDirButton.Text = "扫描目录";
         AutoFindGameDirButton.UseVisualStyleBackColor = true;
         AutoFindGameDirButton.Click += AutoFindGameDirButton_Click;
-        // 
+        //
         // UseModsCheckbox
-        // 
+        //
         UseModsCheckbox.AutoSize = true;
         UseModsCheckbox.BackColor = SystemColors.Control;
         UseModsCheckbox.CheckAlign = ContentAlignment.MiddleRight;
@@ -1049,11 +1049,11 @@ public class LaunchWindow : Form
         UseModsCheckbox.Name = "UseModsCheckbox";
         UseModsCheckbox.Size = new Size(78, 19);
         UseModsCheckbox.TabIndex = 3;
-        UseModsCheckbox.Text = "Use Mods";
+        UseModsCheckbox.Text = "使用模组";
         UseModsCheckbox.UseVisualStyleBackColor = false;
-        // 
+        //
         // ModPackCombobox
-        // 
+        //
         ModPackCombobox.DropDownStyle = ComboBoxStyle.DropDownList;
         ModPackCombobox.FormattingEnabled = true;
         ModPackCombobox.Location = new Point(5, 203);
@@ -1061,65 +1061,65 @@ public class LaunchWindow : Form
         ModPackCombobox.Size = new Size(121, 23);
         ModPackCombobox.TabIndex = 4;
         ModPackCombobox.DropDown += ModPackCombobox_OnDropDown;
-        // 
+        //
         // label6
-        // 
+        //
         label6.AutoSize = true;
         label6.BackColor = SystemColors.Control;
         label6.Location = new Point(5, 185);
         label6.Name = "label6";
         label6.Size = new Size(91, 15);
         label6.TabIndex = 16;
-        label6.Text = "Select ModPack";
-        // 
+        label6.Text = "选择模组包";
+        //
         // ServerPasswordTextBox
-        // 
+        //
         ServerPasswordTextBox.Anchor = AnchorStyles.Bottom;
         ServerPasswordTextBox.Location = new Point(151, 235);
         ServerPasswordTextBox.Name = "ServerPasswordTextBox";
         ServerPasswordTextBox.Size = new Size(215, 23);
         ServerPasswordTextBox.TabIndex = 8;
-        // 
+        //
         // label8
-        // 
+        //
         label8.AutoSize = true;
         label8.BackColor = SystemColors.Control;
         label8.Location = new Point(216, 99);
         label8.Name = "label8";
         label8.Size = new Size(74, 15);
         label8.TabIndex = 19;
-        label8.Text = "Join a server!";
-        // 
+        label8.Text = "加入服务器！";
+        //
         // label9
-        // 
+        //
         label9.AutoSize = true;
         label9.BackColor = SystemColors.Control;
         label9.Location = new Point(526, 99);
         label9.Name = "label9";
         label9.Size = new Size(78, 15);
         label9.TabIndex = 20;
-        label9.Text = "Host a server!";
-        // 
+        label9.Text = "开启服务器！";
+        //
         // DedicatedServerPasswordLabel
-        // 
+        //
         DedicatedServerPasswordLabel.AutoSize = true;
         DedicatedServerPasswordLabel.BackColor = SystemColors.Control;
         DedicatedServerPasswordLabel.Location = new Point(456, 266);
         DedicatedServerPasswordLabel.Name = "DedicatedServerPasswordLabel";
         DedicatedServerPasswordLabel.Size = new Size(111, 15);
         DedicatedServerPasswordLabel.TabIndex = 29;
-        DedicatedServerPasswordLabel.Text = "Set Server Password";
-        // 
+        DedicatedServerPasswordLabel.Text = "设置服务器密码";
+        //
         // DedicatedServerPasswordTextBox
-        // 
+        //
         DedicatedServerPasswordTextBox.Anchor = AnchorStyles.Bottom;
         DedicatedServerPasswordTextBox.Location = new Point(456, 284);
         DedicatedServerPasswordTextBox.Name = "DedicatedServerPasswordTextBox";
         DedicatedServerPasswordTextBox.Size = new Size(215, 23);
         DedicatedServerPasswordTextBox.TabIndex = 14;
-        // 
+        //
         // InclusionLabel
-        // 
+        //
         InclusionLabel.AutoSize = true;
         InclusionLabel.BackColor = SystemColors.Control;
         InclusionLabel.Location = new Point(456, 217);
@@ -1127,119 +1127,119 @@ public class LaunchWindow : Form
         InclusionLabel.Size = new Size(55, 15);
         InclusionLabel.TabIndex = 27;
         InclusionLabel.Text = "Inclusion";
-        // 
+        //
         // InclusionTextBox
-        // 
+        //
         InclusionTextBox.Anchor = AnchorStyles.Bottom;
         InclusionTextBox.Location = new Point(456, 235);
         InclusionTextBox.Name = "InclusionTextBox";
         InclusionTextBox.Size = new Size(215, 23);
         InclusionTextBox.TabIndex = 13;
-        // 
+        //
         // DeviceIPLabel
-        // 
+        //
         DeviceIPLabel.AutoSize = true;
         DeviceIPLabel.BackColor = SystemColors.Control;
         DeviceIPLabel.Location = new Point(456, 117);
         DeviceIPLabel.Name = "DeviceIPLabel";
         DeviceIPLabel.Size = new Size(55, 15);
         DeviceIPLabel.TabIndex = 25;
-        DeviceIPLabel.Text = "Device IP";
-        // 
+        DeviceIPLabel.Text = "主机IP";
+        //
         // DeviceIPTextBox
-        // 
+        //
         DeviceIPTextBox.Anchor = AnchorStyles.Bottom;
         DeviceIPTextBox.Location = new Point(456, 135);
         DeviceIPTextBox.Name = "DeviceIPTextBox";
         DeviceIPTextBox.Size = new Size(215, 23);
         DeviceIPTextBox.TabIndex = 11;
-        // 
+        //
         // StartServerButton
-        // 
+        //
         StartServerButton.Location = new Point(456, 313);
         StartServerButton.Name = "StartServerButton";
         StartServerButton.Size = new Size(215, 23);
         StartServerButton.TabIndex = 15;
-        StartServerButton.Text = "Start Server!";
+        StartServerButton.Text = "开启服务器！";
         StartServerButton.UseVisualStyleBackColor = true;
         StartServerButton.Click += StartServerButton_Click;
-        // 
+        //
         // LevelLabel
-        // 
+        //
         LevelLabel.AutoSize = true;
         LevelLabel.BackColor = SystemColors.Control;
         LevelLabel.Location = new Point(456, 165);
         LevelLabel.Name = "LevelLabel";
         LevelLabel.Size = new Size(34, 15);
         LevelLabel.TabIndex = 22;
-        LevelLabel.Text = "Level";
-        // 
+        LevelLabel.Text = "地图";
+        //
         // LevelTextBox
-        // 
+        //
         LevelTextBox.Anchor = AnchorStyles.Bottom;
         LevelTextBox.Location = new Point(456, 183);
         LevelTextBox.Name = "LevelTextBox";
         LevelTextBox.Size = new Size(215, 23);
         LevelTextBox.TabIndex = 12;
-        // 
+        //
         // ServerPasswordLabel
-        // 
+        //
         ServerPasswordLabel.AutoSize = true;
         ServerPasswordLabel.BackColor = SystemColors.Control;
         ServerPasswordLabel.Location = new Point(150, 217);
         ServerPasswordLabel.Name = "ServerPasswordLabel";
         ServerPasswordLabel.Size = new Size(122, 15);
         ServerPasswordLabel.TabIndex = 30;
-        ServerPasswordLabel.Text = "Enter Server Password";
-        // 
+        ServerPasswordLabel.Text = "输入服务器密码";
+        //
         // PlayerCountLabel
-        // 
+        //
         PlayerCountLabel.AutoSize = true;
         PlayerCountLabel.BackColor = SystemColors.Control;
         PlayerCountLabel.Location = new Point(703, 211);
         PlayerCountLabel.Name = "PlayerCountLabel";
         PlayerCountLabel.Size = new Size(75, 15);
         PlayerCountLabel.TabIndex = 32;
-        PlayerCountLabel.Text = "Player Count";
-        // 
+        PlayerCountLabel.Text = "玩家数量";
+        //
         // PlayerCountTextBox
-        // 
+        //
         PlayerCountTextBox.Anchor = AnchorStyles.Bottom;
         PlayerCountTextBox.Location = new Point(703, 229);
         PlayerCountTextBox.Name = "PlayerCountTextBox";
         PlayerCountTextBox.Size = new Size(48, 23);
         PlayerCountTextBox.TabIndex = 18;
-        // 
+        //
         // AdditionalServerLaunchArgumentsLabel
-        // 
+        //
         AdditionalServerLaunchArgumentsLabel.AutoSize = true;
         AdditionalServerLaunchArgumentsLabel.BackColor = SystemColors.Control;
         AdditionalServerLaunchArgumentsLabel.Location = new Point(456, 14);
         AdditionalServerLaunchArgumentsLabel.Name = "AdditionalServerLaunchArgumentsLabel";
         AdditionalServerLaunchArgumentsLabel.Size = new Size(201, 15);
         AdditionalServerLaunchArgumentsLabel.TabIndex = 20;
-        AdditionalServerLaunchArgumentsLabel.Text = "Additional Server Launch Arguments";
-        // 
+        AdditionalServerLaunchArgumentsLabel.Text = "额外服务器启动参数";
+        //
         // AdditionalServerLaunchArgumentsTextBox
-        // 
+        //
         AdditionalServerLaunchArgumentsTextBox.Anchor = AnchorStyles.Bottom;
         AdditionalServerLaunchArgumentsTextBox.Location = new Point(456, 32);
         AdditionalServerLaunchArgumentsTextBox.Name = "AdditionalServerLaunchArgumentsTextBox";
         AdditionalServerLaunchArgumentsTextBox.Size = new Size(272, 23);
         AdditionalServerLaunchArgumentsTextBox.TabIndex = 21;
-        // 
+        //
         // PlaylistLabel
-        // 
+        //
         PlaylistLabel.AutoSize = true;
         PlaylistLabel.BackColor = SystemColors.Control;
         PlaylistLabel.Location = new Point(703, 159);
         PlaylistLabel.Name = "PlaylistLabel";
         PlaylistLabel.Size = new Size(78, 15);
         PlaylistLabel.TabIndex = 0;
-        PlaylistLabel.Text = "Select Playlist";
-        // 
+        PlaylistLabel.Text = "设置游玩列表";
+        //
         // PlaylistComboBox
-        // 
+        //
         PlaylistComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
         PlaylistComboBox.FormattingEnabled = true;
         PlaylistComboBox.Location = new Point(703, 177);
@@ -1247,9 +1247,9 @@ public class LaunchWindow : Form
         PlaylistComboBox.Size = new Size(154, 23);
         PlaylistComboBox.TabIndex = 17;
         PlaylistComboBox.DropDown += PlaylistCombobox_OnDropDown;
-        // 
+        //
         // PlaylistCheckBox
-        // 
+        //
         PlaylistCheckBox.AutoSize = true;
         PlaylistCheckBox.BackColor = SystemColors.Control;
         PlaylistCheckBox.CheckAlign = ContentAlignment.MiddleRight;
@@ -1257,39 +1257,39 @@ public class LaunchWindow : Form
         PlaylistCheckBox.Name = "PlaylistCheckBox";
         PlaylistCheckBox.Size = new Size(85, 19);
         PlaylistCheckBox.TabIndex = 16;
-        PlaylistCheckBox.Text = "Use Playlist";
+        PlaylistCheckBox.Text = "使用游玩列表";
         PlaylistCheckBox.UseVisualStyleBackColor = false;
-        // 
+        //
         // StartPointLabel
-        // 
+        //
         StartPointLabel.AutoSize = true;
         StartPointLabel.BackColor = SystemColors.Control;
         StartPointLabel.Location = new Point(703, 258);
         StartPointLabel.Name = "StartPointLabel";
         StartPointLabel.Size = new Size(62, 15);
         StartPointLabel.TabIndex = 34;
-        StartPointLabel.Text = "Start Point";
-        // 
+        StartPointLabel.Text = "起始点";
+        //
         // StartPointTextBox
-        // 
+        //
         StartPointTextBox.Anchor = AnchorStyles.Bottom;
         StartPointTextBox.Location = new Point(703, 276);
         StartPointTextBox.Name = "StartPointTextBox";
         StartPointTextBox.Size = new Size(154, 23);
         StartPointTextBox.TabIndex = 19;
-        // 
+        //
         // label7
-        // 
+        //
         label7.AutoSize = true;
         label7.BackColor = Color.Transparent;
         label7.Location = new Point(79, 77);
         label7.Name = "label7";
         label7.Size = new Size(692, 15);
         label7.TabIndex = 35;
-        label7.Text = "If you own the game legitimately, you MUST have EA Desktop opened before joining a server. Otherwise, you WILL run into issues.";
-        // 
+        label7.Text = "如果你合法拥有这个游戏，你必须在加入服务器前打开EA App。不然你将会遭遇问题。";
+        //
         // AllowAIBackfillCheckBox
-        // 
+        //
         AllowAIBackfillCheckBox.AutoSize = true;
         AllowAIBackfillCheckBox.BackColor = SystemColors.Control;
         AllowAIBackfillCheckBox.CheckAlign = ContentAlignment.MiddleRight;
@@ -1297,30 +1297,30 @@ public class LaunchWindow : Form
         AllowAIBackfillCheckBox.Name = "AllowAIBackfillCheckBox";
         AllowAIBackfillCheckBox.Size = new Size(111, 19);
         AllowAIBackfillCheckBox.TabIndex = 20;
-        AllowAIBackfillCheckBox.Text = "Allow AI Backfill";
+        AllowAIBackfillCheckBox.Text = "允许AI填充";
         AllowAIBackfillCheckBox.UseVisualStyleBackColor = false;
-        // 
+        //
         // FOVLabel
-        // 
+        //
         FOVLabel.AutoSize = true;
         FOVLabel.BackColor = SystemColors.Control;
         FOVLabel.Location = new Point(5, 237);
         FOVLabel.Name = "FOVLabel";
         FOVLabel.Size = new Size(76, 15);
         FOVLabel.TabIndex = 37;
-        FOVLabel.Text = "Field Of View";
-        // 
+        FOVLabel.Text = "视场角";
+        //
         // FOVTextBox
-        // 
+        //
         FOVTextBox.Anchor = AnchorStyles.Bottom;
         FOVTextBox.Location = new Point(5, 255);
         FOVTextBox.MaxLength = 32;
         FOVTextBox.Name = "FOVTextBox";
         FOVTextBox.Size = new Size(46, 23);
         FOVTextBox.TabIndex = 5;
-        // 
+        //
         // LaunchWindow
-        // 
+        //
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         BackgroundImageLayout = ImageLayout.Stretch;
@@ -1373,7 +1373,7 @@ public class LaunchWindow : Form
         MaximizeBox = false;
         Name = "LaunchWindow";
         Icon = Icon.FromHandle(CypressLauncher.Properties.Resources.CypressIcon.GetHicon());
-        Text = "Cypress Launcher";
+        Text = "Cypress 启动器";
         Load += LaunchWindow_Load;
         ResumeLayout(false);
         PerformLayout();
@@ -1419,15 +1419,15 @@ public class LaunchWindow : Form
                     process.WaitForExit();
                     if (process.ExitCode != 0)
                     {
-                        GameStatusLabel.Text = "Patcher failed (Code: " + process.ExitCode.ToString("X") + ")";
+                        GameStatusLabel.Text = "修补失败 (代码：" + process.ExitCode.ToString("X") + ")";
                         return;
                     }
-                    GameStatusLabel.Text = "Success - Created patched executable " + s_gameToPatchedExecutableName[m_selectedGame];
+                    GameStatusLabel.Text = "成功 - 已创建修补后的可执行文件 " + s_gameToPatchedExecutableName[m_selectedGame];
                 }
                 catch (Exception ex)
                 {
-                    GameStatusLabel.Text = "Failed to start courgette";
-                    MessageBox.Show("Exception while starting courgette: " + ex.Message);
+                    GameStatusLabel.Text = "启动 courgette 失败";
+                    MessageBox.Show("启动 courgette 时遇到错误：" + ex.Message);
                     return;
                 }
             }
@@ -1478,7 +1478,7 @@ public class LaunchWindow : Form
                 }
                 catch (Exception ex2)
                 {
-                    MessageBox.Show("Exception when attempting to copy " + GetServerDLLName() + ": " + ex2.Message);
+                    MessageBox.Show("尝试复制 " + GetServerDLLName() + " 时发生错误：" + ex2.Message);
                     return;
                 }
 
@@ -1505,16 +1505,16 @@ public class LaunchWindow : Form
             {
                 if (ex3.NativeErrorCode == 2)
                 {
-                    GameStatusLabel.Text = "Game executable not found.";
+                    GameStatusLabel.Text = "游戏可执行文件未找到。";
                 }
                 else
                 {
-                    MessageBox.Show("Exception: " + ex3.Message);
+                    MessageBox.Show("错误：" + ex3.Message);
                 }
             }
             catch (Exception ex4)
             {
-                MessageBox.Show("Exception: " + ex4.Message);
+                MessageBox.Show("错误：" + ex4.Message);
             }
         }
         else
@@ -1578,23 +1578,23 @@ public class LaunchWindow : Form
             try
             {
                 process2.Start();
-                GameStatusLabel.Text = $"Game launched (PID {process2.Id})";
+                GameStatusLabel.Text = $"游戏已启动 (进程号 {process2.Id})";
                 GameStatusLabel.ForeColor = Color.LightGreen;
             }
             catch (Win32Exception ex3)
             {
                 if (ex3.NativeErrorCode == 2)
                 {
-                    GameStatusLabel.Text = "Game executable not found.";
+                    GameStatusLabel.Text = "游戏可执行文件未找到。";
                 }
                 else
                 {
-                    MessageBox.Show("Exception: " + ex3.Message);
+                    MessageBox.Show("错误：" + ex3.Message);
                 }
             }
             catch (Exception ex4)
             {
-                MessageBox.Show("Exception: " + ex4.Message);
+                MessageBox.Show("错误：" + ex4.Message);
             }
         }
     }
