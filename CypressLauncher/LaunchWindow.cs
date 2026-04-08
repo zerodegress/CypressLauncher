@@ -326,6 +326,11 @@ public class LaunchWindow : Form
         return string.Join(" ", args.Select(QuoteWindowsArgument));
     }
 
+    private static string EscapeBatchSetValue(string value)
+    {
+        return value.Replace("%", "%%");
+    }
+
     private bool VerifyLaunch()
     {
         if (string.IsNullOrWhiteSpace(GameDirectoryLabel.Text))
@@ -1638,32 +1643,52 @@ public class LaunchWindow : Form
 
         }
 
-        ProcessStartInfo startInfo2 = new ProcessStartInfo
-        {
-            FileName = Path.Combine(gameDir, path),
-            WorkingDirectory = gameDir,
-            UseShellExecute = false
-        };
-        foreach (string arg in launchArgs)
-        {
-            startInfo2.ArgumentList.Add(arg);
-        }
-        startInfo2.Environment["EARtPLaunchCode"] = GetRtPLaunchCode();
-        startInfo2.Environment["ContentId"] = "1026482";
-        startInfo2.Environment["GW_LAUNCH_ARGS"] = BuildWindowsCommandLine(launchArgs);
+        string launchCommandLine = BuildWindowsCommandLine(launchArgs);
+        string executablePath = Path.Combine(gameDir, path);
+        string launchScriptPath = Path.Combine(GetAppdataDir(), $"launch_server_{DateTime.UtcNow:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}.cmd");
+        StringBuilder launchScript = new StringBuilder();
+        launchScript.AppendLine("@echo off");
+        launchScript.AppendLine("setlocal");
+        launchScript.AppendLine($"cd /d \"{gameDir}\"");
+        launchScript.AppendLine($"set \"EARtPLaunchCode={EscapeBatchSetValue(GetRtPLaunchCode())}\"");
+        launchScript.AppendLine("set \"ContentId=1026482\"");
+        launchScript.AppendLine($"set \"GW_LAUNCH_ARGS={EscapeBatchSetValue(launchCommandLine)}\"");
         if (flag)
         {
-            startInfo2.Environment["GAME_DATA_DIR"] = Path.Combine(gameDir, "ModData", ModPackCombobox.Text);
+            launchScript.AppendLine($"set \"GAME_DATA_DIR={EscapeBatchSetValue(Path.Combine(gameDir, "ModData", ModPackCombobox.Text))}\"");
         }
         else
         {
-            startInfo2.Environment.Remove("GAME_DATA_DIR");
+            launchScript.AppendLine("set \"GAME_DATA_DIR=\"");
         }
+        launchScript.AppendLine($"\"{executablePath}\" {launchCommandLine}");
+        launchScript.AppendLine("set \"_exitcode=%ERRORLEVEL%\"");
+        launchScript.AppendLine("del \"%~f0\" >nul 2>&1");
+        launchScript.AppendLine("exit /b %_exitcode%");
+        File.WriteAllText(launchScriptPath, launchScript.ToString(), new UTF8Encoding(false));
+
+        ProcessStartInfo startInfo2 = new ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/d /c \"\"{launchScriptPath}\"\"",
+            WorkingDirectory = gameDir,
+            UseShellExecute = false
+        };
 
         Process process2 = new Process
         {
             StartInfo = startInfo2,
             EnableRaisingEvents = true
+        };
+        process2.Exited += delegate
+        {
+            try
+            {
+                File.Delete(launchScriptPath);
+            }
+            catch
+            {
+            }
         };
         process2.Exited += GameProcess_Exited;
         try
