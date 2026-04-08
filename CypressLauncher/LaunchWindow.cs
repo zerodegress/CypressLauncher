@@ -7,6 +7,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using CypressLauncher.Properties;
@@ -237,6 +239,91 @@ public class LaunchWindow : Form
         int day = utcNow.Day;
         num = (uint)((utcNow.Year * 104729) ^ (month * 224737) ^ (day * 350377));
         return (num ^ ((num << 16) ^ (num >> 16))).ToString();
+    }
+
+    [DllImport("shell32.dll", SetLastError = true)]
+    private static extern IntPtr CommandLineToArgvW(string lpCmdLine, out int pNumArgs);
+
+    [DllImport("kernel32.dll")]
+    private static extern IntPtr LocalFree(IntPtr hMem);
+
+    private static List<string> SplitWindowsCommandLine(string args)
+    {
+        if (string.IsNullOrWhiteSpace(args))
+        {
+            return new List<string>();
+        }
+
+        IntPtr argv = CommandLineToArgvW(args, out int argc);
+        if (argv == IntPtr.Zero || argc <= 0)
+        {
+            return args.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
+        }
+
+        List<string> result = new List<string>(argc);
+        try
+        {
+            for (int i = 0; i < argc; i++)
+            {
+                IntPtr p = Marshal.ReadIntPtr(argv, i * IntPtr.Size);
+                result.Add(Marshal.PtrToStringUni(p) ?? string.Empty);
+            }
+        }
+        finally
+        {
+            LocalFree(argv);
+        }
+
+        return result;
+    }
+
+    private static string QuoteWindowsArgument(string arg)
+    {
+        if (arg.Length == 0)
+        {
+            return "\"\"";
+        }
+        if (arg.IndexOfAny(new[] { ' ', '\t', '\n', '\v', '"' }) == -1)
+        {
+            return arg;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.Append('"');
+        int backslashCount = 0;
+        foreach (char c in arg)
+        {
+            if (c == '\\')
+            {
+                backslashCount++;
+                continue;
+            }
+            if (c == '"')
+            {
+                sb.Append('\\', backslashCount * 2 + 1);
+                sb.Append('"');
+                backslashCount = 0;
+                continue;
+            }
+
+            if (backslashCount > 0)
+            {
+                sb.Append('\\', backslashCount);
+                backslashCount = 0;
+            }
+            sb.Append(c);
+        }
+        if (backslashCount > 0)
+        {
+            sb.Append('\\', backslashCount * 2);
+        }
+        sb.Append('"');
+        return sb.ToString();
+    }
+
+    private static string BuildWindowsCommandLine(IEnumerable<string> args)
+    {
+        return string.Join(" ", args.Select(QuoteWindowsArgument));
     }
 
     private bool VerifyLaunch()
@@ -1440,167 +1527,165 @@ public class LaunchWindow : Form
             return;
         }
         string gameDir = GetGameDir();
-        Environment.SetEnvironmentVariable("EARtPLaunchCode", GetRtPLaunchCode());
-        Environment.SetEnvironmentVariable("ContentId", "1026482");
         bool flag = UseModsCheckbox.Checked && !string.IsNullOrEmpty(ModPackCombobox.Text);
-        Environment.SetEnvironmentVariable("GAME_DATA_DIR", flag ? Path.Combine(gameDir, "ModData", ModPackCombobox.Text) : null);
         bool playlistflag = PlaylistCheckBox.Checked && !string.IsNullOrWhiteSpace(PlaylistComboBox.Text);
         bool aibackfillflag = AllowAIBackfillCheckBox.Checked;
-        string text;
+        List<string> launchArgs = new List<string>();
         if (m_selectedGame < PVZGame.BFN)
         {
-
-            text = "-server -level " + LevelTextBox.Text + " -listen " + DeviceIPTextBox.Text + " -inclusion " + InclusionTextBox.Text + " -allowMultipleInstances " + "-Network.ServerAddress " + DeviceIPTextBox.Text;
+            launchArgs.Add("-server");
+            launchArgs.Add("-level");
+            launchArgs.Add(LevelTextBox.Text);
+            launchArgs.Add("-listen");
+            launchArgs.Add(DeviceIPTextBox.Text);
+            launchArgs.Add("-inclusion");
+            launchArgs.Add(InclusionTextBox.Text);
+            launchArgs.Add("-allowMultipleInstances");
+            launchArgs.Add("-Network.ServerAddress");
+            launchArgs.Add(DeviceIPTextBox.Text);
             if (!string.IsNullOrWhiteSpace(DedicatedServerPasswordTextBox.Text))
             {
-                text = text + " -Server.ServerPassword " + DedicatedServerPasswordTextBox.Text;
+                launchArgs.Add("-Server.ServerPassword");
+                launchArgs.Add(DedicatedServerPasswordTextBox.Text);
             }
             if (playlistflag)
             {
-                text = text + " -usePlaylist -playlistFilename \"" + Path.Combine(GetGameDir(), "Playlists", PlaylistComboBox.Text) + "\"";
+                launchArgs.Add("-usePlaylist");
+                launchArgs.Add("-playlistFilename");
+                launchArgs.Add(Path.Combine(GetGameDir(), "Playlists", PlaylistComboBox.Text));
             }
             if (s_serverLaunchArgsForGame.ContainsKey(m_selectedGame))
             {
-                text = text + " " + s_serverLaunchArgsForGame[m_selectedGame];
+                launchArgs.AddRange(SplitWindowsCommandLine(s_serverLaunchArgsForGame[m_selectedGame]));
             }
             if (!string.IsNullOrWhiteSpace(AdditionalServerLaunchArgumentsTextBox.Text))
             {
-                text = text + " " + AdditionalServerLaunchArgumentsTextBox.Text;
+                launchArgs.AddRange(SplitWindowsCommandLine(AdditionalServerLaunchArgumentsTextBox.Text));
             }
             if (!string.IsNullOrWhiteSpace(PlayerCountTextBox.Text))
             {
-                text = text + " -Network.MaxClientCount " + PlayerCountTextBox.Text;
-            }
-            Environment.SetEnvironmentVariable("GW_LAUNCH_ARGS", text);
-            if (!File.Exists(Path.Combine(gameDir, s_destDLLName)))
-            {
-
-                try
-                {
-                    File.Copy(GetServerDLLName(), Path.Combine(gameDir, s_destDLLName), overwrite: true);
-                }
-                catch (Exception ex2)
-                {
-                    MessageBox.Show("Exception when attempting to copy " + GetServerDLLName() + ": " + ex2.Message);
-                    return;
-                }
-
-            }
-            ProcessStartInfo startInfo2 = new ProcessStartInfo
-            {
-                FileName = Path.Combine(gameDir, path),
-                Arguments = text,
-                WorkingDirectory = gameDir,
-                UseShellExecute = false
-            };
-            Process process2 = new Process
-            {
-                StartInfo = startInfo2,
-                EnableRaisingEvents = true
-            };
-            process2.Exited += GameProcess_Exited;
-            try
-            {
-                process2.Start();
-                GameStatusLabel.Text = $"Game launched (PID {process2.Id})";
-                GameStatusLabel.ForeColor = Color.LightGreen;
-            }
-            catch (Win32Exception ex3)
-            {
-                if (ex3.NativeErrorCode == 2)
-                {
-                    GameStatusLabel.Text = "Game executable not found.";
-                }
-                else
-                {
-                    MessageBox.Show("Exception: " + ex3.Message);
-                }
-            }
-            catch (Exception ex4)
-            {
-                MessageBox.Show("Exception: " + ex4.Message);
+                launchArgs.Add("-Network.MaxClientCount");
+                launchArgs.Add(PlayerCountTextBox.Text);
             }
         }
         else
         {
-            text = "-server" + " -listen " + DeviceIPTextBox.Text + " -dsub " + LevelTextBox.Text + " -inclusion " + InclusionTextBox.Text + " -startpoint " + StartPointTextBox.Text + " -allowMultipleInstances -enableServerLog " + "-Network.ServerAddress " + DeviceIPTextBox.Text;
+            launchArgs.Add("-server");
+            launchArgs.Add("-listen");
+            launchArgs.Add(DeviceIPTextBox.Text);
+            launchArgs.Add("-dsub");
+            launchArgs.Add(LevelTextBox.Text);
+            launchArgs.Add("-inclusion");
+            launchArgs.Add(InclusionTextBox.Text);
+            launchArgs.Add("-startpoint");
+            launchArgs.Add(StartPointTextBox.Text);
+            launchArgs.Add("-allowMultipleInstances");
+            launchArgs.Add("-enableServerLog");
+            launchArgs.Add("-Network.ServerAddress");
+            launchArgs.Add(DeviceIPTextBox.Text);
             if (!string.IsNullOrWhiteSpace(DedicatedServerPasswordTextBox.Text))
             {
-                text = text + " -Server.ServerPassword " + DedicatedServerPasswordTextBox.Text;
+                launchArgs.Add("-Server.ServerPassword");
+                launchArgs.Add(DedicatedServerPasswordTextBox.Text);
             }
             if (playlistflag)
             {
-                text = text + " -usePlaylist -playlistFilename \"" + Path.Combine(GetGameDir(), "Playlists", PlaylistComboBox.Text) + "\"";
+                launchArgs.Add("-usePlaylist");
+                launchArgs.Add("-playlistFilename");
+                launchArgs.Add(Path.Combine(GetGameDir(), "Playlists", PlaylistComboBox.Text));
             }
             if (flag)
             {
-                text = text + " -datapath \"" + Path.Combine(GetGameDir(), "ModData", ModPackCombobox.Text) + "\"";
+                launchArgs.Add("-datapath");
+                launchArgs.Add(Path.Combine(GetGameDir(), "ModData", ModPackCombobox.Text));
             }
             if (!aibackfillflag)
             {
-                text = text + " -GameMode.BackfillMpWithAI false";
+                launchArgs.Add("-GameMode.BackfillMpWithAI");
+                launchArgs.Add("false");
             }
             if (s_serverLaunchArgsForGame.ContainsKey(m_selectedGame))
             {
-                text = text + " " + s_serverLaunchArgsForGame[m_selectedGame];
+                launchArgs.AddRange(SplitWindowsCommandLine(s_serverLaunchArgsForGame[m_selectedGame]));
             }
             if (!string.IsNullOrWhiteSpace(AdditionalServerLaunchArgumentsTextBox.Text))
             {
-                text = text + " " + AdditionalServerLaunchArgumentsTextBox.Text;
+                launchArgs.AddRange(SplitWindowsCommandLine(AdditionalServerLaunchArgumentsTextBox.Text));
             }
             if (!string.IsNullOrWhiteSpace(PlayerCountTextBox.Text))
             {
-                text = text + " -Network.MaxClientCount " + PlayerCountTextBox.Text + " -NetObjectSystem.MaxServerConnectionCount " + PlayerCountTextBox.Text + " -Online.DirtySockMaxConnectionCount " + PlayerCountTextBox.Text;
+                launchArgs.Add("-Network.MaxClientCount");
+                launchArgs.Add(PlayerCountTextBox.Text);
+                launchArgs.Add("-NetObjectSystem.MaxServerConnectionCount");
+                launchArgs.Add(PlayerCountTextBox.Text);
+                launchArgs.Add("-Online.DirtySockMaxConnectionCount");
+                launchArgs.Add(PlayerCountTextBox.Text);
             }
-            Environment.SetEnvironmentVariable("GW_LAUNCH_ARGS", text);
-            if (!File.Exists(Path.Combine(gameDir, s_destDLLName)))
-            {
+        }
 
-                try
-                {
-                    File.Copy(GetServerDLLName(), Path.Combine(gameDir, s_destDLLName), overwrite: true);
-                }
-                catch (Exception ex2)
-                {
-                    MessageBox.Show("Exception when attempting to copy " + GetServerDLLName() + ": " + ex2.Message);
-                    return;
-                }
+        if (!File.Exists(Path.Combine(gameDir, s_destDLLName)))
+        {
 
-            }
-            ProcessStartInfo startInfo2 = new ProcessStartInfo
-            {
-                FileName = Path.Combine(gameDir, path),
-                Arguments = text,
-                WorkingDirectory = gameDir,
-                UseShellExecute = false
-            };
-            Process process2 = new Process
-            {
-                StartInfo = startInfo2,
-                EnableRaisingEvents = true
-            };
-            process2.Exited += GameProcess_Exited;
             try
             {
-                process2.Start();
-                GameStatusLabel.Text = $"Game launched (PID {process2.Id})";
-                GameStatusLabel.ForeColor = Color.LightGreen;
+                File.Copy(GetServerDLLName(), Path.Combine(gameDir, s_destDLLName), overwrite: true);
             }
-            catch (Win32Exception ex3)
+            catch (Exception ex2)
             {
-                if (ex3.NativeErrorCode == 2)
-                {
-                    GameStatusLabel.Text = "Game executable not found.";
-                }
-                else
-                {
-                    MessageBox.Show("Exception: " + ex3.Message);
-                }
+                MessageBox.Show("Exception when attempting to copy " + GetServerDLLName() + ": " + ex2.Message);
+                return;
             }
-            catch (Exception ex4)
+
+        }
+
+        ProcessStartInfo startInfo2 = new ProcessStartInfo
+        {
+            FileName = Path.Combine(gameDir, path),
+            WorkingDirectory = gameDir,
+            UseShellExecute = false
+        };
+        foreach (string arg in launchArgs)
+        {
+            startInfo2.ArgumentList.Add(arg);
+        }
+        startInfo2.Environment["EARtPLaunchCode"] = GetRtPLaunchCode();
+        startInfo2.Environment["ContentId"] = "1026482";
+        startInfo2.Environment["GW_LAUNCH_ARGS"] = BuildWindowsCommandLine(launchArgs);
+        if (flag)
+        {
+            startInfo2.Environment["GAME_DATA_DIR"] = Path.Combine(gameDir, "ModData", ModPackCombobox.Text);
+        }
+        else
+        {
+            startInfo2.Environment.Remove("GAME_DATA_DIR");
+        }
+
+        Process process2 = new Process
+        {
+            StartInfo = startInfo2,
+            EnableRaisingEvents = true
+        };
+        process2.Exited += GameProcess_Exited;
+        try
+        {
+            process2.Start();
+            GameStatusLabel.Text = $"Game launched (PID {process2.Id})";
+            GameStatusLabel.ForeColor = Color.LightGreen;
+        }
+        catch (Win32Exception ex3)
+        {
+            if (ex3.NativeErrorCode == 2)
             {
-                MessageBox.Show("Exception: " + ex4.Message);
+                GameStatusLabel.Text = "Game executable not found.";
             }
+            else
+            {
+                MessageBox.Show("Exception: " + ex3.Message);
+            }
+        }
+        catch (Exception ex4)
+        {
+            MessageBox.Show("Exception: " + ex4.Message);
         }
     }
 }
